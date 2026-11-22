@@ -42,6 +42,12 @@
     <ClCompile Include="Erroe.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="AST.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="IdentifierTable.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Token.h">
@@ -64,6 +70,9 @@
     </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="AST.h">
+      <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,10 +1,20 @@
+
 #pragma once
 #include <iostream>
-#include <vector>
-#include <string>
-using namespace std;
-struct Varible
-{
-	string type;
-	string value;
+
+enum class DataType : uint8_t {
+    Int,
+    Float,
+    Double,
+    CHAR,
+    BOOL
 };
+
+template <typename T>
+#pragma pack(push, 1)
+struct Variable 
+{
+    T value;           
+    DataType type;     
+};
+#pragma pack(pop)

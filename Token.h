@@ -2,6 +2,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "Split.h"
+#include <thread>
 using namespace std;
 enum TokenType
 {
@@ -27,7 +29,8 @@ enum TokenType
     // Операторы
     OPERATOR,             // +, -, *, /, =
     COMPARISON,           // ==, !=, >, <
-    LOGICAL,              // &&, ||, !
+    LOGICAL, // &&, ||, !
+    WITHONE, //++, --, **,
 
     // Специальные
     MEMORY_DIRECTIVE,     // memory, port, asm
@@ -52,16 +55,24 @@ enum TokenType
 class Token
 {
 public:
-    int line = 0, column = 0;
+    int line = 1, column = 0;
     TokenType type = TokenType::None;
 
     vector<TokenType> types;
     vector<string> values;
-
-    void SaveToken(TokenType type, string value)
+    void reserve()
     {
-        types.push_back(type);
-        values.push_back(value);
+        thread t1(prepare_data<TokenType>, 100000, ref(types));
+        thread t2(prepare_data<string>, 100000, ref(values));
+        t1.join();
+        t2.join();
+
+
+    }
+    void SaveToken(const TokenType& type, const string& value)
+    {
+        types.emplace_back(type);
+        values.emplace_back(value);
     }
     void clear_tokens()
     {
@@ -71,4 +82,3 @@ public:
         column = 0;
     }
 };
-

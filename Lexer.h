@@ -1,50 +1,220 @@
 #pragma once
 #include <iostream>
-
 #include <string>
 #include <vector>
+#include <sstream>
 #include "Token.h"
-#include"Keyword/cout.h"
-#include "Keyword/map.h"
+#include "Split.h"
+#include "Parser.h"
+
 using namespace std;
 
 class Lexer
 {
-	vector<string> values;
-	vector<TokenType>types;
-
+    string text;
+    Token token;
+    Parser* parser = new Parser();
 
 public:
-	void poluch(TokenType token, string value)
-	{
-		values.push_back(value);
-		types.push_back(token);
-		if (token == TokenType::END_STR)
-		{
-			obr();
-			types.clear();
-			values.clear();
-		}
-	
-	}
-private:
-	void obr()
-	{
-		for (int i = 0; i < values.size(); i++)
-		{
-			if ((i + 2 < values.size()) && (commands.find(values[i]) != commands.end()) && (types[i]==TokenType::KEYWORD))
-			{
-				
-				if (types[i + 2] == TokenType::LITERAL_STRING)
-					commands[values[i]](values[i + 2]);
-				else if (types[i + 2] == TokenType::IDENTIFIER)
-					commands[values[i]]("\""+variables[values[i + 2]].value+ "\"");
-					
-			}
-			if ((types[i] == TokenType::TYPE_NAME) && (i + 2 < values.size()) && (variables_reg.find(values[i]) != variables_reg.end())&&(i-2>=0))
-				variables_reg[values[i]](values[i - 2], values[i + 2]);
-			
-		}
-	}
-};
+    void SetText(const char* text)
+    {
+        this->text = text;
+    }
 
+    void pars()
+    {
+        vector<char*> str;
+        token.reserve();
+        str.reserve(1000);
+        str = split(text, ';');
+
+        for (int i = 0; i < str.size(); i++)
+        {
+            pars_str(str[i]);
+            peredach();
+            token.clear_tokens();
+        }
+    }
+
+    
+    uint8_t inString : 1;
+
+    void pars_str(const string& line)
+    {
+        string current = "";
+        current.reserve(32); 
+        inString = 0;
+
+        for (int j = 0; j < line.size(); j++)
+        {
+            char c = line[j];
+
+            if (c == '"')
+            {
+                if (!inString)
+                {
+                    if (!current.empty())
+                    {
+                        toker(current);
+                        current.clear();
+                    }
+                    inString = true;
+                    current.push_back(c);
+                }
+                else
+                {
+                    current.push_back(c);
+                    toker(current);
+                    current.clear();
+                    inString = false;
+                }
+                continue;
+            }
+
+            if (inString)
+            {
+                current += c;
+            }
+            else
+            {
+             
+                if (c == '=' || c == '+' || c == '-' || c == '*' || c == '/' ||
+                    c == '>' || c == '<' || c == '!' || c == '&' || c == '|')
+                {
+                    if (!current.empty())
+                    {
+                        toker(current);
+                        current.clear();
+                    }
+
+                    if (j + 1 < line.length())
+                    {
+                        char next = line[j + 1];
+
+                        
+                        if (c == '>' && next == '>') { toker(">>"); j++; continue; }
+                        if (c == '<' && next == '<') { toker("<<"); j++; continue; }
+                        if (c == '=' && next == '=') { toker("=="); j++; continue; }
+                        if (c == '!' && next == '=') { toker("!="); j++; continue; }
+                        if (c == '&' && next == '&') { toker("&&"); j++; continue; }
+                        if (c == '|' && next == '|') { toker("||"); j++; continue; }
+                        if (c == '+' && next == '+') { toker("++"); j++; continue; }
+                        if (c == '-' && next == '-') { toker("--"); j++; continue; }
+                        if (c == '*' && next == '*') { toker("**"); j++; continue; }
+
+                       
+                        if (c == '-' && next >= '0' && next <= '9')
+                        {
+                            string buf = "-";
+                            buf.reserve(16);
+                            for (int i = j + 1; i < line.size(); i++)
+                            {
+                               
+                                if (line[i] >= '0' && line[i] <= '9') {
+                                    buf += line[i];
+                                    j++;
+                                }
+                                else {
+                                    break;
+                                }
+                            }
+                            toker(buf);
+                            continue;
+                        }
+                        
+
+                    }
+
+                    
+                    if (c == '=') toker("=");
+                    else if (c == '+') toker("+");
+                    else if (c == '-') toker("-");
+                    else if (c == '*') toker("*");
+                    else if (c == '/') toker("/");
+                    else if (c == '>') toker(">");
+                    else if (c == '<') toker("<");
+                    else if (c == '!') toker("!");
+                    else if (c == '&') toker("&");
+                    else if (c == '|') toker("|");
+                }
+               
+                else if (c == '.' || c == '(' || c == ')' || c == ';' || c == ',' ||
+                    c == '{' || c == '}' || c == '[' || c == ']')
+                {
+                    if (!current.empty())
+                    {
+                        toker(current);
+                        current.clear();
+                    }
+
+                    // Передаем фиксированные литералы вместо string(1, c)
+                    if (c == '.') toker(".");
+                    else if (c == '(') toker("(");
+                    else if (c == ')') toker(")");
+                    else if (c == ';') toker(";");
+                    else if (c == ',') toker(",");
+                    else if (c == '{') toker("{");
+                    else if (c == '}') toker("}");
+                    else if (c == '[') toker("[");
+                    else if (c == ']') toker("]");
+                }
+                else if (c == ' ' || c== '\n' || c=='\r')
+                {
+                    if (!current.empty())
+                    {
+                        toker(current);
+                        current.clear();
+                    }
+                }
+                else
+                {
+                    current += c;
+                }
+            }
+        }
+
+        if (!current.empty())
+        {
+            toker(current);
+        }
+    }
+
+private:
+    void toker(const string& tok)
+    {
+        if (tok == "cout")
+            token.SaveToken(TokenType::KEYWORD, tok);
+        else if (tok == "(" || tok == ")")
+            token.SaveToken(TokenType::BRACKET, tok);
+        else if (tok == ">>")
+            token.SaveToken(TokenType::OPERATOR, tok);
+        else if (start_with(tok, '"') && end_with(tok, '"'))
+        {
+            token.SaveToken(TokenType::LITERAL_STRING, tok);
+        }
+        else if (tok == ";")
+        {
+            token.SaveToken(TokenType::END_STR, tok);
+        }
+        else if (tok == ".") token.SaveToken(TokenType::POINT, tok);
+        else if (tok == "int" || tok == "bool" || tok=="float") token.SaveToken(TokenType::TYPE_NAME, tok);
+        else if (tok == "cin" || tok == "if" || tok == "while") token.SaveToken(TokenType::KEYWORD, tok);
+        else if (tok == "++" || tok == "--" || tok == "**") token.SaveToken(TokenType::WITHONE, tok);
+        else if (tok == "=" || tok == "-" || tok == "+" || tok == "*" || tok == "/") token.SaveToken(TokenType::OPERATOR, tok);
+        else if (tok == "true" || tok == "false") token.SaveToken(TokenType::LITERAL_BOOL, tok);
+        else if (tok == "==") token.SaveToken(TokenType::COMPARISON, tok);
+        else if (tok == "!") token.SaveToken(TokenType::LOGICAL, tok);
+        else if (is_number(tok))
+            token.SaveToken(TokenType::NUMBER, tok);
+        else
+            token.SaveToken(TokenType::IDENTIFIER, tok);
+    }
+
+    void peredach()
+    {
+        for (int i = 0; i < token.types.size(); i++)
+        {
+            parser->poluch(token.types[i], to_char(token.values[i]));
+        }
+    }
+};
