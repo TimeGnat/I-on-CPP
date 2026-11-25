@@ -38,7 +38,7 @@ public:
 
     
     uint8_t inString : 1;
-
+    uint8_t inChar : 1;
     void pars_str(const string& line)
     {
         string current = "";
@@ -70,6 +70,8 @@ public:
                 }
                 continue;
             }
+            if (c =='\'')
+            { }
 
             if (inString)
             {
@@ -192,6 +194,8 @@ private:
         {
             token.SaveToken(TokenType::LITERAL_STRING, tok);
         }
+        else if (start_with(tok, '\'')&& end_with(tok, '\''))
+            token.SaveToken(TokenType::LITERAL_CHAR, tok);
         else if (tok == ";")
         {
             token.SaveToken(TokenType::END_STR, tok);

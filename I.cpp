@@ -17,6 +17,7 @@ int main()
     setlocale(LC_ALL, "Russian");
     std::string text;
     Lexer Lexer;
+
     {
         ifstream file("example.i", ios::binary | ios::ate);
         ios_base::sync_with_stdio(false);
@@ -50,5 +51,5 @@ int main()
     cout << output_buffer;
     // Считаем разницу в миллисекундах
     std::cout << "Время выполнения: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " микросекунд\n";
-
+    cin.get();
 }
